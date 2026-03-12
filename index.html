@@ -8,27 +8,13 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-  :root {
-    --bg: #0a0f1a;
-    --card: #131b2e;
-    --card-hover: #1a2540;
-    --accent: #4fd1c5;
-    --accent-dim: #2a8a80;
-    --text: #e8ecf4;
-    --text2: #8b95a8;
-    --muted: #5a6478;
-    --border: #1e2a42;
-  }
+  :root{--bg:#0a0f1a;--card:#131b2e;--card-hover:#1a2540;--accent:#4fd1c5;--accent-dim:#2a8a80;--text:#e8ecf4;--text2:#8b95a8;--muted:#5a6478;--border:#1e2a42}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden}
-
-  /* ── Upload ── */
-  #upload-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:24px;
-    background:radial-gradient(ellipse at 20% 50%,rgba(79,209,197,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(99,130,200,.05) 0%,transparent 50%),var(--bg)}
+  #upload-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:24px;background:radial-gradient(ellipse at 20% 50%,rgba(79,209,197,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(99,130,200,.05) 0%,transparent 50%),var(--bg)}
   .upload-box{text-align:center;max-width:520px;width:100%;animation:fadeUp .8s ease-out}
   @keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-  .upload-box h1{font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(2.2rem,6vw,3.4rem);line-height:1.1;margin-bottom:12px;
-    background:linear-gradient(135deg,#4fd1c5,#7c8cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .upload-box h1{font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(2.2rem,6vw,3.4rem);line-height:1.1;margin-bottom:12px;background:linear-gradient(135deg,#4fd1c5,#7c8cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
   .upload-box p{color:var(--text2);font-size:1.05rem;margin-bottom:40px;line-height:1.6}
   .drop-zone{border:2px dashed var(--border);border-radius:16px;padding:56px 32px;cursor:pointer;transition:all .3s;background:rgba(19,27,46,.5)}
   .drop-zone.over{border-color:var(--accent);background:rgba(79,209,197,.04)}
@@ -37,203 +23,260 @@
   .drop-label{font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:6px}
   .drop-sub{font-size:.88rem;color:var(--muted)}
   #file-input{display:none}
-
-  /* ── App ── */
   #app-screen{display:none;flex-direction:column;height:100vh;height:100dvh}
   .hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;z-index:1000}
   .logo{font-family:'Playfair Display',serif;font-weight:700;font-size:1.2rem;background:linear-gradient(135deg,#4fd1c5,#7c8cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
   .fname{font-size:.82rem;color:var(--muted);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .btn-new{background:none;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:8px;font-size:.82rem;cursor:pointer;font-family:inherit;transition:all .2s}
   .btn-new:hover{border-color:var(--accent);color:var(--accent)}
-
-  /* ── Map ── */
+  /* Filter bar */
+  .filter-bar{display:flex;gap:8px;padding:10px 20px;overflow-x:auto;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);scrollbar-width:none}
+  .filter-bar::-webkit-scrollbar{display:none}
+  .filter-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:.78rem;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text2);transition:all .2s;white-space:nowrap;flex-shrink:0;font-family:inherit}
+  .filter-chip .chip-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .filter-chip .chip-count{opacity:.5;font-size:.7rem}
+  .filter-chip.active{border-color:currentColor;color:var(--text);background:var(--card-hover)}
+  .filter-chip:hover{border-color:var(--muted)}
+  /* Map */
   #map-wrap{flex:1;min-height:0;position:relative}
   #map{width:100%;height:100%}
-  .leaflet-tile-pane{}
   .loc-badge{position:absolute;top:12px;right:12px;z-index:800;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:6px}
-  .loc-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
-  .loc-dot.on{background:var(--accent);animation:pulse 2s infinite}
+  .loc-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}.loc-dot.on{background:var(--accent);animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-  /* ── Markers ── */
-  .pin{width:26px;height:26px;border-radius:50% 50% 50% 0;background:var(--accent);border:3px solid rgba(255,255,255,.9);transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.3);transition:all .2s}
-  .pin:hover{transform:rotate(-45deg) scale(1.2);background:#7c8cf8}
+  .pin{width:26px;height:26px;border-radius:50% 50% 50% 0;border:3px solid rgba(255,255,255,.9);transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.3);transition:all .2s}
+  .pin:hover{transform:rotate(-45deg) scale(1.2)}
   .me{width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 4px rgba(59,130,246,.3),0 2px 8px rgba(0,0,0,.3);animation:mePulse 2s infinite}
   @keyframes mePulse{0%,100%{box-shadow:0 0 0 4px rgba(59,130,246,.3),0 2px 8px rgba(0,0,0,.3)}50%{box-shadow:0 0 0 8px rgba(59,130,246,.15),0 2px 8px rgba(0,0,0,.3)}}
-
-  /* ── Leaflet popup ── */
   .leaflet-popup-content-wrapper{background:var(--card)!important;color:var(--text)!important;border-radius:10px!important;border:1px solid var(--border)!important;box-shadow:0 8px 32px rgba(0,0,0,.4)!important}
   .leaflet-popup-content{font-family:'DM Sans',sans-serif!important;font-size:.85rem!important}
   .leaflet-popup-tip{background:var(--card)!important}
-
-  /* ── Tiles ── */
+  /* Tiles */
   .tiles{flex-shrink:0;background:var(--bg);border-top:1px solid var(--border)}
   .tiles-hdr{padding:14px 20px 8px;display:flex;align-items:baseline;justify-content:space-between}
-  .tiles-hdr h2{font-size:.92rem;font-weight:600}
-  .tiles-hdr span{font-size:.78rem;color:var(--muted)}
+  .tiles-hdr h2{font-size:.92rem;font-weight:600}.tiles-hdr span{font-size:.78rem;color:var(--muted)}
   .tiles-row{display:flex;gap:14px;padding:8px 20px 16px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .tiles-row::-webkit-scrollbar{display:none}
-
-  .tile{flex:0 0 280px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;scroll-snap-align:start;
-    transition:all .25s;cursor:pointer;display:flex;flex-direction:column;gap:10px}
+  .tile{flex:0 0 280px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;scroll-snap-align:start;transition:all .25s;cursor:pointer;display:flex;flex-direction:column;gap:10px}
   .tile:hover{background:var(--card-hover);border-color:var(--accent-dim);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+  .tile-selected{border-color:var(--accent)!important;background:var(--card-hover)!important;box-shadow:0 0 0 1px var(--accent),0 8px 32px rgba(0,0,0,.4)!important}
   .tile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
   .tile-name{font-weight:600;font-size:.95rem;line-height:1.3;flex:1}
   .tile-dist{flex-shrink:0;font-size:.75rem;font-weight:600;color:var(--accent);background:rgba(79,209,197,.1);padding:3px 9px;border-radius:6px;white-space:nowrap}
+  .tile-group-badge{font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0}
   .tile-desc{font-size:.82rem;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .tile-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
   .tile-tag{font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.04);padding:2px 8px;border-radius:4px}
   .tile-actions{display:flex;gap:8px;margin-top:auto;padding-top:6px}
   .tbtn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:7px;font-size:.78rem;font-weight:500;font-family:inherit;text-decoration:none;border:none;cursor:pointer;transition:background .2s}
   .tbtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .tbtn-route{background:rgba(79,209,197,.12);color:var(--accent)}
-  .tbtn-route:hover{background:rgba(79,209,197,.22)}
-  .tbtn-web{background:rgba(124,140,248,.1);color:#7c8cf8}
-  .tbtn-web:hover{background:rgba(124,140,248,.2)}
-
-  @media(max-width:640px){
-    .hdr{padding:10px 14px}
-    .tiles-hdr{padding:12px 14px 6px}
-    .tiles-row{padding:6px 14px 14px;gap:10px}
-    .tile{flex:0 0 250px;padding:14px}
-  }
-  @media(min-width:1024px){
-    .tiles{max-height:280px}
-    .tile{flex:0 0 300px}
-  }
+  .tbtn-route{background:rgba(79,209,197,.12);color:var(--accent)}.tbtn-route:hover{background:rgba(79,209,197,.22)}
+  .tbtn-web{background:rgba(124,140,248,.1);color:#7c8cf8}.tbtn-web:hover{background:rgba(124,140,248,.2)}
+  @media(max-width:640px){.hdr{padding:10px 14px}.filter-bar{padding:8px 14px}.tiles-hdr{padding:12px 14px 6px}.tiles-row{padding:6px 14px 14px;gap:10px}.tile{flex:0 0 250px;padding:14px}}
+  @media(min-width:1024px){.tiles{max-height:280px}.tile{flex:0 0 300px}}
 </style>
 </head>
 <body>
-
-<!-- ════ Upload Screen ════ -->
 <div id="upload-screen">
   <div class="upload-box">
     <h1>KML Explorer</h1>
     <p>Lade deine KML-Datei und entdecke deine gespeicherten Orte auf einer interaktiven Karte.</p>
     <div class="drop-zone" id="drop-zone">
-      <div class="drop-icon">
-        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      </div>
+      <div class="drop-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
       <div class="drop-label">KML-Datei hierher ziehen</div>
       <div class="drop-sub">oder klicken zum Auswählen</div>
     </div>
     <input type="file" id="file-input" accept=".kml,.kmz">
   </div>
 </div>
-
-<!-- ════ App Screen ════ -->
 <div id="app-screen">
   <header class="hdr">
     <div class="logo">KML Explorer</div>
     <div class="fname" id="fname"></div>
     <button class="btn-new" onclick="location.reload()">Neue Datei</button>
   </header>
+  <div class="filter-bar" id="filter-bar"></div>
   <div id="map-wrap">
     <div id="map"></div>
-    <div class="loc-badge">
-      <div class="loc-dot" id="loc-dot"></div>
-      <span id="loc-text">Standort wird gesucht…</span>
-    </div>
+    <div class="loc-badge"><div class="loc-dot" id="loc-dot"></div><span id="loc-text">Standort wird gesucht…</span></div>
   </div>
   <div class="tiles">
-    <div class="tiles-hdr">
-      <h2>Nächste Orte</h2>
-      <span id="t-count"></span>
-    </div>
+    <div class="tiles-hdr"><h2>Nächste Orte</h2><span id="t-count"></span></div>
     <div class="tiles-row" id="tiles-row"></div>
   </div>
 </div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
   "use strict";
 
-  // ── State ──
-  var places=[], map=null, markers=[], userMarker=null, userLat=null, userLng=null;
+  var GROUP_COLORS=['#4fd1c5','#f59e0b','#ec4899','#8b5cf6','#10b981','#ef4444','#3b82f6','#f97316','#14b8a6','#a855f7','#06b6d4','#e11d48','#84cc16','#6366f1','#d946ef','#0ea5e9'];
+  var places=[],map=null,markers=[],userMarker=null,userLat=null,userLng=null,selectedIdx=-1,mapInitialized=false;
+  var groups={},groupColors={},activeGroups=new Set();
 
-  // ── KML Parser ──
+  // ── KML Parser with Folder (subgroup) support ──
   function parseKML(txt){
     var xml=new DOMParser().parseFromString(txt,'text/xml');
     var res=[];
-    xml.querySelectorAll('Placemark').forEach(function(pm){
-      var name=pm.querySelector('name')?(pm.querySelector('name').textContent||'').trim():'Unbekannt';
-      var desc=pm.querySelector('description')?(pm.querySelector('description').textContent||'').trim():'';
-      var ce=pm.querySelector('coordinates');
-      if(!ce)return;
-      var c=ce.textContent.trim().split(',');
-      if(c.length<2)return;
-      var lng=parseFloat(c[0]),lat=parseFloat(c[1]);
-      if(isNaN(lat)||isNaN(lng))return;
-      var ext={};
-      pm.querySelectorAll('ExtendedData Data, ExtendedData SimpleData, SchemaData SimpleData').forEach(function(d){
-        var k=d.getAttribute('name')||d.tagName;
-        var v=d.querySelector('value')?(d.querySelector('value').textContent||'').trim():(d.textContent||'').trim();
-        if(k&&v)ext[k]=v;
-      });
-      var dd=parseDesc(desc);
-      res.push({name:name,description:dd.clean,lat:lat,lng:lng,extData:ext,descFields:dd.fields});
+    // 1) Try Folder-based groups
+    var folders=xml.querySelectorAll('Folder');
+    var hasFolders=false;
+    folders.forEach(function(folder){
+      var folderName=(folder.querySelector(':scope > name')||{}).textContent||'Unbekannt';
+      // Only direct child Placemarks
+      var pms=folder.querySelectorAll(':scope > Placemark');
+      if(pms.length>0) hasFolders=true;
+      pms.forEach(function(pm){parsePlacemark(pm,folderName,res);});
     });
+    // 2) Also grab Placemarks NOT inside folders
+    var allPms=xml.querySelectorAll('Placemark');
+    allPms.forEach(function(pm){
+      // Skip if already inside a folder and we found folders
+      if(hasFolders && pm.parentElement && pm.parentElement.tagName==='Folder') return;
+      parsePlacemark(pm,null,res);
+    });
+    // 3) If no folders, detect groups from ExtendedData fields
+    if(!hasFolders){
+      // Try amenity, healthcare, emergency as group key
+      var groupKeys=['amenity','healthcare','emergency'];
+      var bestKey=null,bestCount=0;
+      groupKeys.forEach(function(k){
+        var cnt=0;
+        res.forEach(function(p){if(p.extData[k])cnt++;});
+        if(cnt>bestCount){bestCount=cnt;bestKey=k;}
+      });
+      if(bestKey && bestCount>res.length*0.3){
+        res.forEach(function(p){
+          p.group=p.extData[bestKey]||'Andere';
+        });
+      }
+    }
     return res;
+  }
+
+  function parsePlacemark(pm,folderName,res){
+    var nameEl=pm.querySelector('name');
+    var name=nameEl?(nameEl.textContent||'').trim():'Unbekannt';
+    var desc=pm.querySelector('description')?(pm.querySelector('description').textContent||'').trim():'';
+    var ce=pm.querySelector('coordinates');
+    if(!ce)return;
+    var c=ce.textContent.trim().split(',');
+    if(c.length<2)return;
+    var lng=parseFloat(c[0]),lat=parseFloat(c[1]);
+    if(isNaN(lat)||isNaN(lng))return;
+    var ext={};
+    pm.querySelectorAll('ExtendedData Data, ExtendedData SimpleData, SchemaData SimpleData').forEach(function(d){
+      var k=d.getAttribute('name')||d.tagName;
+      var v=d.querySelector('value')?(d.querySelector('value').textContent||'').trim():(d.textContent||'').trim();
+      if(k&&v)ext[k]=v;
+    });
+    var dd=parseDesc(desc);
+    res.push({name:name,description:dd.clean,lat:lat,lng:lng,extData:ext,descFields:dd.fields,group:folderName||null});
   }
 
   function parseDesc(desc){
     if(!desc)return{clean:'',fields:{}};
-    var fields={};var clean=desc;
+    var fields={},clean=desc;
     if(desc.indexOf('<table')!==-1||desc.indexOf('<TABLE')!==-1){
       var tmp=document.createElement('div');tmp.innerHTML=desc;
       tmp.querySelectorAll('tr').forEach(function(r){
         var td=r.querySelectorAll('td,th');
         if(td.length>=2){var k=td[0].textContent.trim(),v=td[1].textContent.trim();if(k&&v)fields[k]=v;}
-      });
-      clean=tmp.textContent.trim();
+      });clean=tmp.textContent.trim();
     }
     return{clean:clean.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim(),fields:fields};
   }
 
-  // ── Haversine ──
-  function hav(la1,lo1,la2,lo2){
-    var R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
-    var a=Math.pow(Math.sin(dLa/2),2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.pow(Math.sin(dLo/2),2);
-    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  // ── Build groups ──
+  function buildGroups(){
+    groups={};groupColors={};
+    var ci=0;
+    places.forEach(function(p){
+      var g=p.group||'Andere';
+      if(!groups[g])groups[g]=0;
+      groups[g]++;
+    });
+    var sorted=Object.keys(groups).sort(function(a,b){return groups[b]-groups[a];});
+    sorted.forEach(function(g){
+      groupColors[g]=GROUP_COLORS[ci%GROUP_COLORS.length];
+      ci++;
+    });
+    // All active by default
+    activeGroups=new Set(sorted);
   }
+
+  function renderFilterBar(){
+    var bar=document.getElementById('filter-bar');
+    var keys=Object.keys(groups).sort(function(a,b){return groups[b]-groups[a];});
+    if(keys.length<=1){bar.style.display='none';return;}
+    bar.innerHTML=keys.map(function(g){
+      var active=activeGroups.has(g);
+      var col=groupColors[g];
+      return '<button class="filter-chip'+(active?' active':'')+'" data-group="'+esc(g)+'" style="'+(active?'border-color:'+col+';color:'+col:'')+'">'
+        +'<span class="chip-dot" style="background:'+col+'"></span>'
+        +esc(g)+' <span class="chip-count">('+groups[g]+')</span></button>';
+    }).join('');
+    bar.querySelectorAll('.filter-chip').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var g=this.getAttribute('data-group');
+        if(activeGroups.has(g)){activeGroups.delete(g);}else{activeGroups.add(g);}
+        renderFilterBar();
+        addMarkers();
+        renderTiles();
+      });
+    });
+  }
+
+  // ── Helpers ──
+  function hav(la1,lo1,la2,lo2){var R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;var a=Math.pow(Math.sin(dLa/2),2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.pow(Math.sin(dLo/2),2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
   function fmtDist(km){return km<1?Math.round(km*1000)+' m':km<10?km.toFixed(1)+' km':Math.round(km)+' km';}
-
-  function routeURL(dLat,dLng){
-    return userLat!==null?'https://www.google.com/maps/dir/'+userLat+','+userLng+'/'+dLat+','+dLng:'https://www.google.com/maps/dir//'+dLat+','+dLng;
-  }
+  function routeURL(dLat,dLng){return userLat!==null?'https://www.google.com/maps/dir/'+userLat+','+userLng+'/'+dLat+','+dLng:'https://www.google.com/maps/dir//'+dLat+','+dLng;}
   function searchURL(name){return 'https://www.google.com/search?q='+encodeURIComponent(name+' homepage official website');}
-
   function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-  // ── Sorted places ──
+  function filteredPlaces(){return places.filter(function(p){return activeGroups.has(p.group||'Andere');});}
+
   function getSorted(){
-    if(userLat===null)return places.slice(0,10);
-    return places.map(function(p){return Object.assign({},p,{dist:hav(userLat,userLng,p.lat,p.lng)});}).sort(function(a,b){return a.dist-b.dist;}).slice(0,10);
+    var fp=filteredPlaces();
+    var refLat,refLng,hasRef=false;
+    // If a place is selected, sort by distance to that place
+    if(selectedIdx>=0){
+      refLat=places[selectedIdx].lat;refLng=places[selectedIdx].lng;hasRef=true;
+    }else if(userLat!==null){
+      refLat=userLat;refLng=userLng;hasRef=true;
+    }
+    if(!hasRef)return fp;
+    return fp.map(function(p){return Object.assign({},p,{dist:hav(refLat,refLng,p.lat,p.lng)});}).sort(function(a,b){return a.dist-b.dist;});
   }
 
-  // ── Init Map ──
+  // ── Map ──
   function initMap(){
     map=L.map('map',{zoomControl:true});
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom:19
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',maxZoom:19
     }).addTo(map);
   }
 
   function addMarkers(){
     markers.forEach(function(m){map.removeLayer(m);});markers=[];
-    places.forEach(function(p){
-      var ic=L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-28]});
-      var m=L.marker([p.lat,p.lng],{icon:ic}).addTo(map).bindPopup('<strong>'+esc(p.name)+'</strong>'+(p.description?'<br>'+esc(p.description.substring(0,120)):''));
+    var fp=filteredPlaces();
+    fp.forEach(function(p,i){
+      var col=groupColors[p.group||'Andere']||'#4fd1c5';
+      var ic=L.divIcon({className:'',html:'<div class="pin" style="background:'+col+'"></div>',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-28]});
+      var m=L.marker([p.lat,p.lng],{icon:ic}).addTo(map).bindPopup('<strong>'+esc(p.name)+'</strong>'+(p.group?'<br><em style="color:'+col+'">'+esc(p.group)+'</em>':'')+(p.description?'<br>'+esc(p.description.substring(0,120)):''));
+      m.on('click',function(){selectPlace(places.indexOf(p));});
       markers.push(m);
     });
-    if(places.length){
-      var cLat=0,cLng=0;
-      places.forEach(function(p){cLat+=p.lat;cLng+=p.lng;});
-      cLat/=places.length;cLng/=places.length;
-      // ~20km radius ≈ zoom level 11
-      map.setView([cLat,cLng],11);
+    if(fp.length && !mapInitialized){
+      // First load: center on user if available, else centroid
+      if(userLat!==null){
+        map.setView([userLat,userLng],13);
+      }else{
+        var cLat=0,cLng=0;
+        fp.forEach(function(p){cLat+=p.lat;cLng+=p.lng;});
+        cLat/=fp.length;cLng/=fp.length;
+        map.setView([cLat,cLng],11);
+      }
+      mapInitialized=true;
     }
   }
 
@@ -244,68 +287,75 @@
     userMarker=L.marker([userLat,userLng],{icon:ic,zIndexOffset:1000}).addTo(map).bindPopup('Dein Standort');
   }
 
-  // ── Render Tiles ──
+  function selectPlace(idx){
+    selectedIdx=idx;
+    renderTiles();
+    document.getElementById('tiles-row').scrollLeft=0;
+    if(idx>=0&&map){map.flyTo([places[idx].lat,places[idx].lng],15,{duration:1});}
+  }
+
   function renderTiles(){
     var s=getSorted();
-    document.getElementById('t-count').textContent=s.length+' von '+places.length+' Orten';
-    document.getElementById('tiles-row').innerHTML=s.map(function(p){
+    var total=filteredPlaces().length;
+    document.getElementById('t-count').textContent=Math.min(s.length,50)+' von '+total+' Orten';
+    // Show up to 50 tiles for smooth scrolling
+    s=s.slice(0,50);
+    document.getElementById('tiles-row').innerHTML=s.map(function(p,i){
+      var isSelected=(selectedIdx>=0&&p.lat===places[selectedIdx].lat&&p.lng===places[selectedIdx].lng);
       var d=p.dist!==undefined?fmtDist(p.dist):'\u2014';
+      var col=groupColors[p.group||'Andere']||'#4fd1c5';
       var all=Object.assign({},p.descFields,p.extData);
-      var entries=Object.keys(all).filter(function(k){return all[k]&&all[k].length<80;}).slice(0,4);
+      var entries=Object.keys(all).filter(function(k){return all[k]&&all[k].length<80&&k!=='@id';}).slice(0,4);
       var tags=entries.map(function(k){return '<span class="tile-tag" title="'+esc(k)+'">'+esc(all[k])+'</span>';}).join('');
       var desc=p.description?'<div class="tile-desc">'+esc(p.description.substring(0,200))+'</div>':'';
-      return '<div class="tile" onclick="window.__fly('+p.lat+','+p.lng+')">'
+      var groupBadge=p.group?'<span class="tile-group-badge" style="background:'+col+'22;color:'+col+'">'+esc(p.group)+'</span>':'';
+      return '<div class="tile'+(isSelected?' tile-selected':'')+'" style="border-top:3px solid '+col+'" onclick="window.__fly('+p.lat+','+p.lng+')">'
         +'<div class="tile-top"><div class="tile-name">'+esc(p.name)+'</div><div class="tile-dist">'+d+'</div></div>'
+        +(groupBadge?'<div>'+groupBadge+'</div>':'')
         +desc
         +(tags?'<div class="tile-meta">'+tags+'</div>':'')
         +'<div class="tile-actions">'
-        +'<a class="tbtn tbtn-route" href="'+routeURL(p.lat,p.lng)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'
-        +'<svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>Route</a>'
-        +'<a class="tbtn tbtn-web" href="'+searchURL(p.name)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'
-        +'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>'
+        +'<a class="tbtn tbtn-route" href="'+routeURL(p.lat,p.lng)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>Route</a>'
+        +'<a class="tbtn tbtn-web" href="'+searchURL(p.name)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>'
         +'</div></div>';
     }).join('');
   }
 
-  // ── Fly to ──
   window.__fly=function(lat,lng){
     if(!map)return;
     map.flyTo([lat,lng],15,{duration:1});
-    var idx=-1;
-    for(var i=0;i<places.length;i++){if(places[i].lat===lat&&places[i].lng===lng){idx=i;break;}}
+    var fp=filteredPlaces();
+    var idx=-1;for(var i=0;i<fp.length;i++){if(fp[i].lat===lat&&fp[i].lng===lng){idx=i;break;}}
     if(idx>=0&&markers[idx])markers[idx].openPopup();
   };
 
-  // ── Geolocation ──
   function startGeo(){
     if(!navigator.geolocation){document.getElementById('loc-text').textContent='Nicht verfügbar';return;}
     navigator.geolocation.watchPosition(function(pos){
+      var isFirst=(userLat===null);
       userLat=pos.coords.latitude;userLng=pos.coords.longitude;
       document.getElementById('loc-dot').classList.add('on');
       document.getElementById('loc-text').textContent='Standort aktiv';
       updateUserMarker();renderTiles();
-    },function(){
-      document.getElementById('loc-text').textContent='Nicht verfügbar';
-    },{enableHighAccuracy:true,maximumAge:30000,timeout:10000});
+      if(isFirst&&map){map.setView([userLat,userLng],13);}
+    },function(){document.getElementById('loc-text').textContent='Nicht verfügbar';},{enableHighAccuracy:true,maximumAge:30000,timeout:10000});
   }
 
-  // ── File handling ──
   function handleFile(file){
     if(!file)return;
     var reader=new FileReader();
     reader.onload=function(e){
       places=parseKML(e.target.result);
       if(!places.length){alert('Keine Orte in der KML-Datei gefunden.');return;}
+      buildGroups();
       document.getElementById('upload-screen').style.display='none';
       document.getElementById('app-screen').style.display='flex';
       document.getElementById('fname').textContent=file.name;
-      initMap();addMarkers();startGeo();renderTiles();
+      renderFilterBar();initMap();addMarkers();startGeo();renderTiles();
       setTimeout(function(){map.invalidateSize();},150);
-    };
-    reader.readAsText(file);
+    };reader.readAsText(file);
   }
 
-  // ── Events ──
   var dz=document.getElementById('drop-zone'),fi=document.getElementById('file-input');
   dz.addEventListener('click',function(){fi.click();});
   dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('over');});
