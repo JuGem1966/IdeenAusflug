@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>KML Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --card: #131b2e;
+    --card-hover: #1a2540;
+    --accent: #4fd1c5;
+    --accent-dim: #2a8a80;
+    --text: #e8ecf4;
+    --text2: #8b95a8;
+    --muted: #5a6478;
+    --border: #1e2a42;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden}
+
+  /* ── Upload ── */
+  #upload-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:24px;
+    background:radial-gradient(ellipse at 20% 50%,rgba(79,209,197,.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(99,130,200,.05) 0%,transparent 50%),var(--bg)}
+  .upload-box{text-align:center;max-width:520px;width:100%;animation:fadeUp .8s ease-out}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  .upload-box h1{font-family:'Playfair Display',serif;font-weight:800;font-size:clamp(2.2rem,6vw,3.4rem);line-height:1.1;margin-bottom:12px;
+    background:linear-gradient(135deg,#4fd1c5,#7c8cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .upload-box p{color:var(--text2);font-size:1.05rem;margin-bottom:40px;line-height:1.6}
+  .drop-zone{border:2px dashed var(--border);border-radius:16px;padding:56px 32px;cursor:pointer;transition:all .3s;background:rgba(19,27,46,.5)}
+  .drop-zone.over{border-color:var(--accent);background:rgba(79,209,197,.04)}
+  .drop-icon{width:64px;height:64px;margin:0 auto 20px;border-radius:50%;background:rgba(79,209,197,.1);display:flex;align-items:center;justify-content:center}
+  .drop-icon svg{width:28px;height:28px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .drop-label{font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:6px}
+  .drop-sub{font-size:.88rem;color:var(--muted)}
+  #file-input{display:none}
+
+  /* ── App ── */
+  #app-screen{display:none;flex-direction:column;height:100vh;height:100dvh}
+  .hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;z-index:1000}
+  .logo{font-family:'Playfair Display',serif;font-weight:700;font-size:1.2rem;background:linear-gradient(135deg,#4fd1c5,#7c8cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .fname{font-size:.82rem;color:var(--muted);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .btn-new{background:none;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:8px;font-size:.82rem;cursor:pointer;font-family:inherit;transition:all .2s}
+  .btn-new:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* ── Map ── */
+  #map-wrap{flex:1;min-height:0;position:relative}
+  #map{width:100%;height:100%}
+  .leaflet-tile-pane{filter:saturate(.85) brightness(.95)}
+  .loc-badge{position:absolute;top:12px;right:12px;z-index:800;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:6px}
+  .loc-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .loc-dot.on{background:var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* ── Markers ── */
+  .pin{width:26px;height:26px;border-radius:50% 50% 50% 0;background:var(--accent);border:3px solid rgba(255,255,255,.9);transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.3);transition:all .2s}
+  .pin:hover{transform:rotate(-45deg) scale(1.2);background:#7c8cf8}
+  .me{width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 0 0 4px rgba(59,130,246,.3),0 2px 8px rgba(0,0,0,.3);animation:mePulse 2s infinite}
+  @keyframes mePulse{0%,100%{box-shadow:0 0 0 4px rgba(59,130,246,.3),0 2px 8px rgba(0,0,0,.3)}50%{box-shadow:0 0 0 8px rgba(59,130,246,.15),0 2px 8px rgba(0,0,0,.3)}}
+
+  /* ── Leaflet popup ── */
+  .leaflet-popup-content-wrapper{background:var(--card)!important;color:var(--text)!important;border-radius:10px!important;border:1px solid var(--border)!important;box-shadow:0 8px 32px rgba(0,0,0,.4)!important}
+  .leaflet-popup-content{font-family:'DM Sans',sans-serif!important;font-size:.85rem!important}
+  .leaflet-popup-tip{background:var(--card)!important}
+
+  /* ── Tiles ── */
+  .tiles{flex-shrink:0;background:var(--bg);border-top:1px solid var(--border)}
+  .tiles-hdr{padding:14px 20px 8px;display:flex;align-items:baseline;justify-content:space-between}
+  .tiles-hdr h2{font-size:.92rem;font-weight:600}
+  .tiles-hdr span{font-size:.78rem;color:var(--muted)}
+  .tiles-row{display:flex;gap:14px;padding:8px 20px 16px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tiles-row::-webkit-scrollbar{display:none}
+
+  .tile{flex:0 0 280px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;scroll-snap-align:start;
+    transition:all .25s;cursor:pointer;display:flex;flex-direction:column;gap:10px}
+  .tile:hover{background:var(--card-hover);border-color:var(--accent-dim);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+  .tile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .tile-name{font-weight:600;font-size:.95rem;line-height:1.3;flex:1}
+  .tile-dist{flex-shrink:0;font-size:.75rem;font-weight:600;color:var(--accent);background:rgba(79,209,197,.1);padding:3px 9px;border-radius:6px;white-space:nowrap}
+  .tile-desc{font-size:.82rem;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .tile-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  .tile-tag{font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.04);padding:2px 8px;border-radius:4px}
+  .tile-actions{display:flex;gap:8px;margin-top:auto;padding-top:6px}
+  .tbtn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:7px;font-size:.78rem;font-weight:500;font-family:inherit;text-decoration:none;border:none;cursor:pointer;transition:background .2s}
+  .tbtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .tbtn-route{background:rgba(79,209,197,.12);color:var(--accent)}
+  .tbtn-route:hover{background:rgba(79,209,197,.22)}
+  .tbtn-web{background:rgba(124,140,248,.1);color:#7c8cf8}
+  .tbtn-web:hover{background:rgba(124,140,248,.2)}
+
+  @media(max-width:640px){
+    .hdr{padding:10px 14px}
+    .tiles-hdr{padding:12px 14px 6px}
+    .tiles-row{padding:6px 14px 14px;gap:10px}
+    .tile{flex:0 0 250px;padding:14px}
+  }
+  @media(min-width:1024px){
+    .tiles{max-height:280px}
+    .tile{flex:0 0 300px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ════ Upload Screen ════ -->
+<div id="upload-screen">
+  <div class="upload-box">
+    <h1>KML Explorer</h1>
+    <p>Lade deine KML-Datei und entdecke deine gespeicherten Orte auf einer interaktiven Karte.</p>
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="drop-label">KML-Datei hierher ziehen</div>
+      <div class="drop-sub">oder klicken zum Auswählen</div>
+    </div>
+    <input type="file" id="file-input" accept=".kml,.kmz">
+  </div>
+</div>
+
+<!-- ════ App Screen ════ -->
+<div id="app-screen">
+  <header class="hdr">
+    <div class="logo">KML Explorer</div>
+    <div class="fname" id="fname"></div>
+    <button class="btn-new" onclick="location.reload()">Neue Datei</button>
+  </header>
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div class="loc-badge">
+      <div class="loc-dot" id="loc-dot"></div>
+      <span id="loc-text">Standort wird gesucht…</span>
+    </div>
+  </div>
+  <div class="tiles">
+    <div class="tiles-hdr">
+      <h2>Nächste Orte</h2>
+      <span id="t-count"></span>
+    </div>
+    <div class="tiles-row" id="tiles-row"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ── State ──
+  var places=[], map=null, markers=[], userMarker=null, userLat=null, userLng=null;
+
+  // ── KML Parser ──
+  function parseKML(txt){
+    var xml=new DOMParser().parseFromString(txt,'text/xml');
+    var res=[];
+    xml.querySelectorAll('Placemark').forEach(function(pm){
+      var name=pm.querySelector('name')?(pm.querySelector('name').textContent||'').trim():'Unbekannt';
+      var desc=pm.querySelector('description')?(pm.querySelector('description').textContent||'').trim():'';
+      var ce=pm.querySelector('coordinates');
+      if(!ce)return;
+      var c=ce.textContent.trim().split(',');
+      if(c.length<2)return;
+      var lng=parseFloat(c[0]),lat=parseFloat(c[1]);
+      if(isNaN(lat)||isNaN(lng))return;
+      var ext={};
+      pm.querySelectorAll('ExtendedData Data, ExtendedData SimpleData, SchemaData SimpleData').forEach(function(d){
+        var k=d.getAttribute('name')||d.tagName;
+        var v=d.querySelector('value')?(d.querySelector('value').textContent||'').trim():(d.textContent||'').trim();
+        if(k&&v)ext[k]=v;
+      });
+      var dd=parseDesc(desc);
+      res.push({name:name,description:dd.clean,lat:lat,lng:lng,extData:ext,descFields:dd.fields});
+    });
+    return res;
+  }
+
+  function parseDesc(desc){
+    if(!desc)return{clean:'',fields:{}};
+    var fields={};var clean=desc;
+    if(desc.indexOf('<table')!==-1||desc.indexOf('<TABLE')!==-1){
+      var tmp=document.createElement('div');tmp.innerHTML=desc;
+      tmp.querySelectorAll('tr').forEach(function(r){
+        var td=r.querySelectorAll('td,th');
+        if(td.length>=2){var k=td[0].textContent.trim(),v=td[1].textContent.trim();if(k&&v)fields[k]=v;}
+      });
+      clean=tmp.textContent.trim();
+    }
+    return{clean:clean.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim(),fields:fields};
+  }
+
+  // ── Haversine ──
+  function hav(la1,lo1,la2,lo2){
+    var R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
+    var a=Math.pow(Math.sin(dLa/2),2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.pow(Math.sin(dLo/2),2);
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+  function fmtDist(km){return km<1?Math.round(km*1000)+' m':km<10?km.toFixed(1)+' km':Math.round(km)+' km';}
+
+  function routeURL(dLat,dLng){
+    return userLat!==null?'https://www.google.com/maps/dir/'+userLat+','+userLng+'/'+dLat+','+dLng:'https://www.google.com/maps/dir//'+dLat+','+dLng;
+  }
+  function searchURL(name){return 'https://www.google.com/search?q='+encodeURIComponent(name+' homepage official website');}
+
+  function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+  // ── Sorted places ──
+  function getSorted(){
+    if(userLat===null)return places.slice(0,10);
+    return places.map(function(p){return Object.assign({},p,{dist:hav(userLat,userLng,p.lat,p.lng)});}).sort(function(a,b){return a.dist-b.dist;}).slice(0,10);
+  }
+
+  // ── Init Map ──
+  function initMap(){
+    map=L.map('map',{zoomControl:true});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains:'abcd',maxZoom:19
+    }).addTo(map);
+  }
+
+  function addMarkers(){
+    markers.forEach(function(m){map.removeLayer(m);});markers=[];
+    var bounds=L.latLngBounds();
+    places.forEach(function(p){
+      var ic=L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-28]});
+      var m=L.marker([p.lat,p.lng],{icon:ic}).addTo(map).bindPopup('<strong>'+esc(p.name)+'</strong>'+(p.description?'<br>'+esc(p.description.substring(0,120)):''));
+      markers.push(m);bounds.extend([p.lat,p.lng]);
+    });
+    if(userLat!==null)bounds.extend([userLat,userLng]);
+    if(places.length)map.fitBounds(bounds,{padding:[40,40],maxZoom:14});
+  }
+
+  function updateUserMarker(){
+    if(userLat===null||!map)return;
+    if(userMarker)map.removeLayer(userMarker);
+    var ic=L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+    userMarker=L.marker([userLat,userLng],{icon:ic,zIndexOffset:1000}).addTo(map).bindPopup('Dein Standort');
+  }
+
+  // ── Render Tiles ──
+  function renderTiles(){
+    var s=getSorted();
+    document.getElementById('t-count').textContent=s.length+' von '+places.length+' Orten';
+    document.getElementById('tiles-row').innerHTML=s.map(function(p){
+      var d=p.dist!==undefined?fmtDist(p.dist):'\u2014';
+      var all=Object.assign({},p.descFields,p.extData);
+      var entries=Object.keys(all).filter(function(k){return all[k]&&all[k].length<80;}).slice(0,4);
+      var tags=entries.map(function(k){return '<span class="tile-tag" title="'+esc(k)+'">'+esc(all[k])+'</span>';}).join('');
+      var desc=p.description?'<div class="tile-desc">'+esc(p.description.substring(0,200))+'</div>':'';
+      return '<div class="tile" onclick="window.__fly('+p.lat+','+p.lng+')">'
+        +'<div class="tile-top"><div class="tile-name">'+esc(p.name)+'</div><div class="tile-dist">'+d+'</div></div>'
+        +desc
+        +(tags?'<div class="tile-meta">'+tags+'</div>':'')
+        +'<div class="tile-actions">'
+        +'<a class="tbtn tbtn-route" href="'+routeURL(p.lat,p.lng)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'
+        +'<svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>Route</a>'
+        +'<a class="tbtn tbtn-web" href="'+searchURL(p.name)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'
+        +'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>'
+        +'</div></div>';
+    }).join('');
+  }
+
+  // ── Fly to ──
+  window.__fly=function(lat,lng){
+    if(!map)return;
+    map.flyTo([lat,lng],15,{duration:1});
+    var idx=-1;
+    for(var i=0;i<places.length;i++){if(places[i].lat===lat&&places[i].lng===lng){idx=i;break;}}
+    if(idx>=0&&markers[idx])markers[idx].openPopup();
+  };
+
+  // ── Geolocation ──
+  function startGeo(){
+    if(!navigator.geolocation){document.getElementById('loc-text').textContent='Nicht verfügbar';return;}
+    navigator.geolocation.watchPosition(function(pos){
+      userLat=pos.coords.latitude;userLng=pos.coords.longitude;
+      document.getElementById('loc-dot').classList.add('on');
+      document.getElementById('loc-text').textContent='Standort aktiv';
+      updateUserMarker();renderTiles();
+    },function(){
+      document.getElementById('loc-text').textContent='Nicht verfügbar';
+    },{enableHighAccuracy:true,maximumAge:30000,timeout:10000});
+  }
+
+  // ── File handling ──
+  function handleFile(file){
+    if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      places=parseKML(e.target.result);
+      if(!places.length){alert('Keine Orte in der KML-Datei gefunden.');return;}
+      document.getElementById('upload-screen').style.display='none';
+      document.getElementById('app-screen').style.display='flex';
+      document.getElementById('fname').textContent=file.name;
+      initMap();addMarkers();startGeo();renderTiles();
+      setTimeout(function(){map.invalidateSize();},150);
+    };
+    reader.readAsText(file);
+  }
+
+  // ── Events ──
+  var dz=document.getElementById('drop-zone'),fi=document.getElementById('file-input');
+  dz.addEventListener('click',function(){fi.click();});
+  dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('over');});
+  dz.addEventListener('dragleave',function(){dz.classList.remove('over');});
+  dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('over');handleFile(e.dataTransfer.files[0]);});
+  fi.addEventListener('change',function(e){handleFile(e.target.files[0]);});
+})();
+</script>
+</body>
+</html>
